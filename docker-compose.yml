@@ -1,0 +1,33 @@
+version: "3.9"
+
+services:
+  pipeline:
+    build: .
+    image: medical-imaging-eval:latest
+    container_name: chestxray-pipeline
+    runtime: nvidia                          # requires nvidia-container-toolkit
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+      - MLFLOW_TRACKING_URI=mlruns
+    volumes:
+      # Persist data, checkpoints, results, and MLflow runs outside the container
+      - ./data:/app/data
+      - ./checkpoints:/app/checkpoints
+      - ./results:/app/results
+      - ./mlruns:/app/mlruns
+      # Kaggle credentials (read-only)
+      - ~/.kaggle/kaggle.json:/root/.kaggle/kaggle.json:ro
+    command: python train.py --config experiments/configs/base_config.yaml
+
+  mlflow-ui:
+    image: python:3.11-slim
+    container_name: mlflow-ui
+    working_dir: /app
+    volumes:
+      - ./mlruns:/app/mlruns
+    ports:
+      - "5000:5000"
+    command: >
+      sh -c "pip install mlflow --quiet &&
+             mlflow ui --host 0.0.0.0 --port 5000 --backend-store-uri mlruns"

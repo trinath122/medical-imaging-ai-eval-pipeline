@@ -1,0 +1,61 @@
+project:
+  name: "medical-imaging-eval-pipeline"
+  description: "NIH ChestX-ray14 diagnostic AI evaluation"
+
+data:
+  kaggle_dataset: "nih-chest-xrays/data"
+  archives_to_download:           # images_001.zip + images_002.zip = ~7.6 GB
+    - "images_001.zip"
+    - "images_002.zip"
+  metadata_file: "Data_Entry_2017.csv"
+  raw_dir: "data/raw"
+  processed_dir: "data/processed"
+  splits_dir: "data/splits"
+  image_size: 224
+  train_ratio: 0.70
+  val_ratio: 0.15
+  test_ratio: 0.15
+  random_seed: 42
+
+labels:
+  - "Atelectasis"
+  - "Cardiomegaly"
+  - "Effusion"
+  - "Infiltration"
+  - "Mass"
+  - "Nodule"
+  - "Pneumonia"
+  - "Pneumothorax"
+  - "Consolidation"
+  - "Edema"
+  - "Emphysema"
+  - "Fibrosis"
+  - "Pleural_Thickening"
+  - "Hernia"
+  - "No Finding"
+
+model:
+  architecture: "densenet121"
+  pretrained: true
+  dropout_rate: 0.3
+  num_classes: 14               # excludes "No Finding"
+
+training:
+  epochs: 30
+  batch_size: 16
+  learning_rate: 0.0001
+  weight_decay: 0.0001
+  scheduler: "cosine"
+  early_stopping_patience: 7
+  mixed_precision: true
+
+uncertainty:
+  mc_dropout_passes: 20         # number of forward passes for MC Dropout
+
+mlflow:
+  tracking_uri: "mlruns"
+  experiment_name: "chestxray14-densenet121"
+
+paths:
+  checkpoint_dir: "checkpoints"
+  results_dir: "results"
